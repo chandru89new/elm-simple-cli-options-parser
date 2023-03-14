@@ -32,30 +32,30 @@ elm> parseString "--file file_path.js --flag --count 5"
 Dict.fromList [("count",Str "5"),("file",Str "file_path.js"),("flag",Boolean True)]
 ```
 
-Everything that looks like a flag/option (ie anything starting with `--`) will get parsed as either a string or a bool wrapped in a custom `Str` or `Boolean` type (not the same as Elm's built-in `String` and `Bool` but just [wrappers around the same](./src/OptionsDecoder.elm#L32)).
+Everything that looks like a flag/option (ie anything starting with `--`) will get parsed into one of these two things:
+
+```elm
+Str String | Bool Boolean
+```
 
 The string can have both keyword args (`--file=somefile.js`) and positional args (`--file somefile.js`).
 
 **To extract the values**:
 
-Two functions to extract values from the parsed options:
-
-- `getValue` (returns a `Maybe String`)
-- `getBoolean` (returns a `Maybe Bool`) 
-
+Use `getValue` to extract the value of a flag. If the flag is not in the string, you will get a `DoesNotExist` value.
 
 ```elm
 elm> parseString "--file file_path.js --flag --count 5" |> getValue "file"
-Just "file_path.js"
+Str "file_path.js"
 
 elm> parseString "--file file_path.js --flag --count 5" |> getValue "count"
-Just "5"
+Str "5"
+
+elm> parseString "--file file_path.js --flag --count 5" |> getValue "flag"
+Boolean True
 
 elm> parseString "--file file_path.js --flag --count 5" |> getValue "non-existent"
-Nothing
-
-elm> parseString "--file file_path.js --flag --count 5" |> getBoolean "flag"
-Just True
+DoesNotExist
 ```
 
 ## But wait, why not "-" ?
