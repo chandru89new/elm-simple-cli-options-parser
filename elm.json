@@ -1,6 +1,6 @@
 {
   "type": "package",
-  "name": "chandru89new/simple-cli-options-parser",
+  "name": "chandru89new/elm-simple-cli-options-parser",
   "summary": "Simple parsing library for extracting CLI options and flags.",
   "license": "BSD-3-Clause",
   "version": "1.0.0",
