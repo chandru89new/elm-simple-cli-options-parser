@@ -1,113 +1,54 @@
 module Tests exposing (..)
 
-import Dict
+import CLIOptionsParser exposing (getBooleanValue, getFloatValue, getIntValue, getStringValue)
 import Expect
-import OptionsDecoder exposing (OptionValue(..), getValue, parseString)
 import Test exposing (..)
 
 
 tests : Test
 tests =
     describe "all tests"
-        [ test "parse --file ./some/file/path.js" <|
-            \_ ->
-                let
-                    str =
-                        "--file ./some/file/path.js"
-                in
-                str
-                    |> parseString
-                    |> getValue "file"
-                    |> Expect.equal (Str "./some/file/path.js")
-        , test "parse --file ./some/file/path.js --error" <|
-            \_ ->
-                let
-                    str =
-                        "--file ./some/file/path.js --error"
-
-                    parsed =
-                        parseString str
-
-                    file =
-                        getValue "file" parsed
-
-                    error =
-                        getValue "error" parsed
-
-                    nonExistentFlag =
-                        getValue "non-existent" parsed
-
-                    result =
-                        ( file, error, nonExistentFlag )
-                in
-                result
-                    |> Expect.equal ( Str "./some/file/path.js", Boolean True, DoesNotExist )
-        , test "parse --file=./some/file/path.js --debug --option something" <|
-            \_ ->
-                let
-                    str =
-                        "--file=./some/file/path.js --debug --option something"
-
-                    parsed =
-                        parseString str
-
-                    expectedOutput =
-                        Dict.fromList
-                            [ ( "debug", OptionsDecoder.Boolean True )
-                            , ( "file", OptionsDecoder.Str "./some/file/path.js" )
-                            , ( "option", OptionsDecoder.Str "something" )
-                            ]
-                in
-                parsed
-                    |> Expect.equal expectedOutput
-        ]
-
-
-examples : Test
-examples =
-    describe "test of examples"
-        [ test "--file=file_path.js --debug --log_file=logs.txt" <|
+        [ test "--file ./src/file_path.js --debug" <|
             \_ ->
                 let
                     input =
-                        "--file=file_path.js --debug --log_file=logs.txt"
+                        "--file ./src/file_path.js --debug"
 
                     output =
-                        Dict.fromList [ ( "debug", Boolean True ), ( "file", Str "file_path.js" ), ( "log_file", Str "logs.txt" ) ]
+                        ( getStringValue "file" input, getBooleanValue "debug" input, getIntValue "count" input )
                 in
-                input
-                    |> parseString
-                    |> Expect.equal output
-        , test "--file file_path.js --flag --count 5" <|
+                Expect.equal output ( Just "./src/file_path.js", Just True, Nothing )
+        , test "--file ./file.js" <|
             \_ ->
                 let
                     input =
-                        "--file file_path.js --flag --count 5"
+                        "--file ./file.js"
 
                     output =
-                        Dict.fromList [ ( "count", Str "5" ), ( "file", Str "file_path.js" ), ( "flag", Boolean True ) ]
+                        getStringValue "file" input
                 in
-                input
-                    |> parseString
-                    |> Expect.equal output
-        , test "--file file_path.js --flag --count 5 |> get value of file" <|
+                Expect.equal output (Just "./file.js")
+        , test "--file ./file.js --debug --count 5 --factor 2.5" <|
             \_ ->
                 let
-                    result =
-                        parseString "--file file_path.js --flag --count 5" |> getValue "file"
+                    input =
+                        "--file ./file.js --debug --count 5 --factor 2.5"
+
+                    output =
+                        { file = getStringValue "file" input
+                        , debug = getBooleanValue "debug" input
+                        , count = getIntValue "count" input
+                        , factor = getFloatValue "factor" input
+                        , notThere = getStringValue "output" input
+                        }
                 in
-                result
-                    |> Expect.equal (Str "file_path.js")
-        , test "--file file_path.js --flag --count 5 |> get value of count" <|
+                Expect.equal output { file = Just "./file.js", debug = Just True, count = Just 5, factor = Just 2.5, notThere = Nothing }
+        , test "--count=5" <|
             \_ ->
-                let
-                    result =
-                        parseString "--file file_path.js --flag --count 5" |> getValue "count"
-                in
-                result
-                    |> Expect.equal (Str "5")
-        , test "--file file_path.js --flag --count 5 |> getValue of flag" <|
-            \_ -> parseString "--file file_path.js --flag --count 5" |> getValue "flag" |> Expect.equal (Boolean True)
-        , test "--file file_path.js --flag --count 5 |> getValue of non-existent" <|
-            \_ -> parseString "--file file_path.js --flag --count 5" |> getValue "non-existent" |> Expect.equal DoesNotExist
+                ("--count=5" |> getIntValue "count")
+                    |> Expect.equal (Just 5)
+        , test "--count 5" <|
+            \_ ->
+                ("--count 5" |> getIntValue "count")
+                    |> Expect.equal (Just 5)
         ]
